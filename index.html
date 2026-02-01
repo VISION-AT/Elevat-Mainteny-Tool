@@ -3,91 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Techniker-Vorgabe & Checkliste</title>
+    <title>Wartungs-Profi EN 13015</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2, h3 { color: #0078d4; border-bottom: 2px solid #333; padding-bottom: 8px; }
-        label { display: block; margin: 15px 0 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; background: #2d2d2d; border: 1px solid #444; border-radius: 6px; color: white; margin-bottom: 10px; }
-        .summary { background: #0078d4; color: white; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
-        .total-time { font-size: 2.2em; font-weight: bold; }
-        .module-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #0078d4; }
-        .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; margin-bottom: 8px; padding-bottom: 4px; }
-        ul { margin: 5px 0; padding-left: 20px; color: #bbb; font-size: 0.9em; }
-        li { margin-bottom: 4px; }
-        .highlight { color: #00ff00; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 15px; }
+        .app-container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        h2 { color: #0078d4; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85em; color: #888; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 12px; background: #2d2d2d; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
+        .time-banner { background: #0078d4; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .time-val { font-size: 2.8em; font-weight: bold; display: block; }
+        .module-card { background: #252525; border-left: 5px solid #0078d4; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; }
+        .task-list { margin: 0; padding-left: 20px; font-size: 0.9em; color: #ccc; }
+        .task-item { margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .task-time { color: #00ff00; font-size: 0.8em; }
+        .wa-btn { background: #25D366; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 20px; }
+        .bonus-card { border-left-color: #ffaa00; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Wartungs-Vorgabe</h2>
+<div class="app-container">
+    <h2>EN 13015 Wartungsplaner</h2>
     
-    <label>Etagen:</label>
-    <input type="number" id="floors" value="5" oninput="calculate()">
-
-    <label>Besuch-Rhythmus:</label>
-    <select id="interval" onchange="calculate()">
-        <option value="1">1x jährlich (Basis-Check)</option>
-        <option value="2">2x jährlich (Standard)</option>
-        <option value="4" selected>4x jährlich (Intensiv / Modulwartung)</option>
-    </select>
-
-    <div class="summary">
-        <div>Soll-Arbeitszeit vor Ort</div>
-        <div class="total-time"><span id="total">0</span> Min.</div>
+    <div class="input-group">
+        <label>Anzahl Stockwerke:</label>
+        <input type="number" id="floors" value="5" oninput="updateApp()">
     </div>
 
-    <div id="modules-container">
-        </div>
+    <div class="input-group">
+        <label>Vertrags-Intervall:</label>
+        <select id="interval" onchange="updateApp()">
+            <option value="1">1x jährlich (Module A+B+C+D)</option>
+            <option value="2">2x jährlich (Halbjahres-Check)</option>
+            <option value="4">4x jährlich (Quartals-Modul + Schmieren)</option>
+        </select>
+    </div>
+
+    <div id="visit-box" class="input-group" style="display:none;">
+        <label>Aktueller Termin:</label>
+        <select id="visit" onchange="updateApp()"></select>
+    </div>
+
+    <div class="time-banner">
+        <span>Gesamt-Vorgabezeit vor Ort</span>
+        <span class="time-val"><span id="totalTime">0</span> Min.</span>
+    </div>
+
+    <div id="checklist"></div>
+
+    <a href="#" id="whatsapp" class="wa-btn">Protokoll an DAN senden</a>
 </div>
 
 <script>
-    function calculate() {
+    const data = {
+        A: { title: "Modul A: Antrieb & Bremse", base: 30, tasks: [
+            ["Treibscheibe/Seile", 10], ["Bremse prüfen", 10], ["Getriebe/Motor", 5], ["Notbefreiung", 5]
+        ]},
+        B: { title: "Modul B: Schacht & Grube", base: 25, tasks: [
+            ["Beleuchtung/Not-Halt", 6], ["Begrenzer/Spannstation", 5], ["Pufferprüfung", 5], ["Schienen/Befestigung", 9]
+        ]},
+        C: { title: "Modul C: Fahrkorb & Fang", base: 20, tasks: [
+            ["Notruf/Sprechstelle", 5], ["Lichtgitter/Türrevers.", 5], ["Fangvorrichtung Sicht", 5], ["Tableau/Licht", 5]
+        ]},
+        D: { title: "Modul D: Schachttüren", base: 0, perFloor: 5, tasks: [
+            ["Kontakte/Verriegelung", 2], ["Rollen/Schließer", 2], ["Notentrieg./Schwelle", 1]
+        ]}
+    };
+
+    function updateApp() {
         const floors = parseInt(document.getElementById('floors').value) || 0;
         const interval = parseInt(document.getElementById('interval').value);
-        const container = document.getElementById('modules-container');
-        container.innerHTML = "";
+        const visitSel = document.getElementById('visit');
+        document.getElementById('visit-box').style.display = (interval > 1) ? 'block' : 'none';
 
-        // Basis-Daten
-        const modules = [
-            { name: "Vorbereitung", time: 15, tasks: ["Anmeldung/Hauswart", "Absperrung Etage", "Fahrschacht-Check"] },
-            { name: "Antrieb & Steuerung", time: Math.round(40/interval), tasks: ["Ölstand prüfen", "Bremslüftung", "Schaltschrank saugen"] },
-            { name: "Türen & Etagen", time: Math.round((floors * 8)/interval), tasks: ["Türkontakte prüfen", "Schwellenreinigung", "Tableaus Test"] },
-            { name: "Fahrkorb & Fang", time: Math.round(20/interval), tasks: ["Notruf-Test", "Lichtgitter", "Fangvorrichtung Sichtprüfung"] }
-        ];
-
-        let total = 0;
-
-        modules.forEach(m => {
-            total += m.time;
-            container.innerHTML += `
-                <div class="module-box">
-                    <div class="module-header"><span>${m.name}</span> <span class="highlight">${m.time} Min</span></div>
-                    <ul>${m.tasks.map(t => `<li>${t}</li>`).join('')}</ul>
-                </div>`;
-        });
-
-        // Spezielles Modul für 4x Wartung
-        if (interval == 4) {
-            const extraTime = 20;
-            total += extraTime;
-            container.innerHTML += `
-                <div class="module-box" style="border-left-color: #ffaa00;">
-                    <div class="module-header"><span>Intensiv-Reinigung & Fett</span> <span class="highlight">${extraTime} Min</span></div>
-                    <ul>
-                        <li>Führungsschienen schmieren</li>
-                        <li>Schachtgrube intensiv reinigen</li>
-                        <li>Türrollen nachstellen/fetten</li>
-                    </ul>
-                </div>`;
+        if (visitSel.options.length !== interval) {
+            visitSel.innerHTML = "";
+            for(let i=1; i<=interval; i++) {
+                let o = document.createElement('option'); o.value = i; o.text = "Besuch " + i;
+                visitSel.add(o);
+            }
         }
 
-        document.getElementById('total').innerText = total;
-    }
-    calculate();
-</script>
+        const visit = parseInt(visitSel.value) || 1;
+        let activeKeys = [];
+        if (interval === 1) activeKeys = ['A', 'B', 'C', 'D'];
+        else if (interval === 2) activeKeys = (visit === 1) ? ['A', 'B'] : ['C', 'D'];
+        else activeKeys = [['A'], ['B'], ['C'], ['D']][visit-1];
 
+        let total = 15; // Rüstzeit Fix
+        let html = "";
+
+        activeKeys.forEach(k => {
+            const m = data[k];
+            const mTime = k === 'D' ? floors * 5 : m.base;
+            total += mTime;
+            html += `<div class="module-card">
+                <div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div>
+                <div class="task-list">${m.tasks.map(t => `<div class="task-item"><span>${t[0]}</span><span class="task-time">${k==='D' ? t[1]*floors : t[1]} Min</span></div>`).join('')}</div>
+            </div>`;
+        });
+
+        if (interval === 4) {
+            total += 20;
+            html += `<div class="module-card bonus-card">
+                <div class="module-header"><span>Zusatz: Schmierung & Reinigung</span><span>20 Min</span></div>
+                <div class="task-list">Führungsschienen ölen, Türführungen fetten, Grube saugen.</div>
+            </div>`;
+        }
+
+        document.getElementById('totalTime').innerText = total;
+        document.getElementById('checklist').innerHTML = html;
+        document.getElementById('whatsapp').href = `https://wa.me/?text=Wartung%20Dornbirn%0AEtagen:%20${floors}%0AIntervall:%20${interval}x%0AZeitvorgabe:%20${total}%20Min.`;
+    }
+    updateApp();
+</script>
 </body>
 </html>
