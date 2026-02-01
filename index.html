@@ -45,7 +45,7 @@
     <div class="input-group">
         <label>Wartungs-Intervall:</label>
         <select id="interval" onchange="updateApp()">
-            <option value="1">1x jährlich (Vollwartung)</option>
+            <option value="1">1x jährlich (Module A-D)</option>
             <option value="2" selected>2x jährlich</option>
             <option value="4">4x jährlich</option>
         </select>
@@ -69,27 +69,27 @@
 <script>
     const data = {
         A: { title: "Modul A: Triebwerk & Steuerung", tasks: [
-            { n: "Triebwerk / Antrieb: Dichtheit, Geräusche, Ölstand.", t: 15, scale: true },
-            { n: "Bremse: Lüftspiel, Justierung & Belag-Kontrolle.", t: 12, scale: false },
-            { n: "Seile / Aufhängung: Spannung, Schlösser, Rollen.", t: 13, scale: false },
-            { n: "Steuerung: Prüfung Relais, Schütze, Platinen.", t: 10, scale: false }
+            { n: "Triebwerk / Antrieb: Dichtheit, Geräusche, Ölstand.", t: 8, scale: true },
+            { n: "Bremse: Lüftspiel, Justierung & Belag-Kontrolle.", t: 5, scale: false },
+            { n: "Seile / Aufhängung: Spannung, Schlösser, Rollen.", t: 5, scale: false },
+            { n: "Steuerung: Prüfung Relais, Schütze, Platinen.", t: 4, scale: false }
         ]},
         B: { title: "Modul B: Schacht & Sicherheit", tasks: [
-            { n: "Geschwindigkeitsbegrenzer: Funktionskontrolle.", t: 10, scale: false },
-            { n: "Führungsschienen: Verschleiß prüfen & schmieren.", t: 15, scale: true },
-            { n: "Schacht: Schienenbefestigung & Stützen-Reinigung.", t: 10, scale: true },
-            { n: "Notbefreiung: Manuell/auto inkl. Akkus prüfen.", t: 5, scale: false }
+            { n: "Geschwindigkeitsbegrenzer: Funktionskontrolle.", t: 4, scale: false },
+            { n: "Führungsschienen: Verschleiß prüfen & schmieren.", t: 6, scale: true },
+            { n: "Schacht: Schienenbefestigung & Stützen-Reinigung.", t: 5, scale: true },
+            { n: "Notbefreiung: Manuell/auto inkl. Akkus prüfen.", t: 3, scale: false }
         ]},
         C: { title: "Modul C: Kabine & Notruf", tasks: [
-            { n: "Fahrkorbtüren: Antrieb reinigen/schmieren & Lichtgitter.", t: 20, scale: true },
-            { n: "Kabine innen: Beleuchtung, Taster, Anzeigen.", t: 10, scale: true },
-            { n: "Kabinendach: Reinigung, Inspektionssteuerung, Fang-Kontakt.", t: 10, scale: true },
-            { n: "Notruf: Zwei-Wege-Kommunikation prüfen.", t: 10, scale: false }
+            { n: "Fahrkorbtüren: Antrieb reinigen/schmieren & Lichtgitter.", t: 7, scale: true },
+            { n: "Kabine innen: Beleuchtung, Taster, Anzeigen.", t: 4, scale: true },
+            { n: "Kabinendach: Reinigung, Inspektionssteuerung, Fang-Kontakt.", t: 5, scale: true },
+            { n: "Notruf: Zwei-Wege-Kommunikation prüfen.", t: 4, scale: false }
         ]},
         D: { title: "Modul D: Etagen & Grube", tasks: [
-            { n: "Schachttüren: Reinigen/Schmieren & Kontakte (je Stock).", t: 5.5, scale: true, perFloor: true },
+            { n: "Schachttüren: Reinigen/Schmieren & Kontakte (je Stock).", t: 4, scale: true, perFloor: true },
             { n: "Haltestellen: Taster, Anzeigen & Pfeile (je Stock).", t: 1, scale: false, perFloor: true },
-            { n: "Schachtgrube: Reinigung, Puffer & Endschalter.", t: 14, scale: true }
+            { n: "Schachtgrube: Reinigung, Puffer & Endschalter.", t: 10, scale: true }
         ]}
     };
 
@@ -138,10 +138,10 @@
         });
 
         if (interval === 4 && visit === 3) {
-            let bonus = Math.round(20 * factor);
+            let bonus = Math.round(15 * factor);
             total += bonus;
             html += `<div class="module-card" style="border-left-color: #ffaa00;">
-                <div class="module-header"><span>E-Modul: Jahresschmierung</span><span>${bonus} Min</span></div>
+                <div class="module-header"><span>Zusatz: Jahresschmierung</span><span>${bonus} Min</span></div>
                 <ul class="task-list"><li class="task-item">Schienen ölen, Türführungen fetten, Grube & Dach saugen.</li></ul>
             </div>`;
         }
@@ -174,8 +174,6 @@
             body += `%0A[X] ${data[k].title}%0A`;
             data[k].tasks.forEach(t => { body += `- ${t.n}%0A`; });
         });
-
-        if (int == 4 && vis == 3) body += `%0A[X] Jahresschmierung & Intensiv-Reinigung%0A`;
 
         window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${body}`;
     }
