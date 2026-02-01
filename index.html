@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision Aufzugtechnik - Dynamischer Planer</title>
+    <title>Vision Aufzugtechnik - Wartungs-Tool</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 15px; }
         .app-container { max-width: 650px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; }
@@ -29,7 +29,7 @@
     
     <div class="input-group">
         <label>Anlage / Standort:</label>
-        <input type="text" id="location" placeholder="z.B. Bachmähdle 37, Dornbirn">
+        <input type="text" id="location" placeholder="Ortet Standort...">
     </div>
 
     <div class="input-group">
@@ -51,7 +51,7 @@
         </select>
     </div>
 
-    <div id="visit-box" class="input-group" style="display:none;">
+    <div id="visit-box" class="input-group">
         <label>Besuch wählen:</label>
         <select id="visit" onchange="updateApp()"></select>
     </div>
@@ -81,10 +81,10 @@
             { n: "Notbefreiung: Manuell/auto inkl. Akkus prüfen.", t: 5, scale: false }
         ]},
         C: { title: "Modul C: Kabine & Notruf", tasks: [
-            { n: "Fahrkorbtüren: Antrieb reinigen/schmieren & Lichtgitter.", 20, scale: true },
-            { n: "Kabine innen: Beleuchtung, Taster, Anzeigen.", 10, scale: true },
-            { n: "Kabinendach: Reinigung, Inspektionssteuerung, Fang-Kontakt.", 10, scale: true },
-            { n: "Notruf: Zwei-Wege-Kommunikation prüfen.", 10, scale: false }
+            { n: "Fahrkorbtüren: Antrieb reinigen/schmieren & Lichtgitter.", t: 20, scale: true },
+            { n: "Kabine innen: Beleuchtung, Taster, Anzeigen.", t: 10, scale: true },
+            { n: "Kabinendach: Reinigung, Inspektionssteuerung, Fang-Kontakt.", t: 10, scale: true },
+            { n: "Notruf: Zwei-Wege-Kommunikation prüfen.", t: 10, scale: false }
         ]},
         D: { title: "Modul D: Etagen & Grube", tasks: [
             { n: "Schachttüren: Reinigen/Schmieren & Kontakte (je Stock).", t: 5.5, scale: true, perFloor: true },
@@ -99,10 +99,9 @@
         const payload = parseInt(document.getElementById('payload').value) || 630;
         const visitSel = document.getElementById('visit');
         
-        // Skalierungsfaktor: 630kg = 1.0 | Jede 1000kg mehr = +20% auf Reinigungsaufgaben
         const factor = 1 + (Math.max(0, payload - 630) / 5000);
-
         document.getElementById('visit-box').style.display = (interval > 1) ? 'block' : 'none';
+
         if (visitSel.options.length !== interval) {
             visitSel.innerHTML = "";
             for(let i=1; i<=interval; i++) {
@@ -112,9 +111,7 @@
         }
 
         const visit = parseInt(visitSel.value) || 1;
-        let activeKeys = (interval === 1) ? ['A', 'B', 'C', 'D'] : 
-                         (interval === 2) ? (visit === 1 ? ['A', 'B'] : ['C', 'D']) : 
-                         [['A'], ['B'], ['C'], ['D']][visit-1];
+        let activeKeys = (interval === 1) ? ['A', 'B', 'C', 'D'] : (interval === 2) ? (visit === 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][visit-1];
 
         let total = 0;
         let html = "";
@@ -125,12 +122,9 @@
             let listHtml = "";
 
             m.tasks.forEach(task => {
-                let tTime = task.t || 10; // Fallback
-                if (task.n.includes("Fahrkorbtüren")) tTime = 20; // Fix für Modul C
-                
+                let tTime = task.t;
                 if (task.scale) tTime *= factor;
                 if (task.perFloor) tTime *= floors;
-
                 tTime = Math.round(tTime);
                 mTime += tTime;
                 listHtml += `<li class="task-item"><span class="task-name">${task.n}</span><span class="task-time">${tTime} Min</span></li>`;
@@ -147,12 +141,22 @@
             let bonus = Math.round(20 * factor);
             total += bonus;
             html += `<div class="module-card" style="border-left-color: #ffaa00;">
-                <div class="module-header"><span>Jahresschmierung & Intensiv-Reinigung</span><span>${bonus} Min</span></div>
+                <div class="module-header"><span>E-Modul: Jahresschmierung</span><span>${bonus} Min</span></div>
                 <ul class="task-list"><li class="task-item">Schienen ölen, Türführungen fetten, Grube & Dach saugen.</li></ul>
             </div>`;
         }
         document.getElementById('totalTime').innerText = total;
         document.getElementById('checklist').innerHTML = html;
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+                    .then(res => res.json())
+                    .then(d => { if(d.display_name) document.getElementById('location').value = d.display_name; });
+            });
+        }
     }
 
     function sendMail() {
@@ -164,17 +168,19 @@
         
         let body = `WARTUNGSPROTOKOLL%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0ANutzlast: ${pay} kg%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Arbeiten:%0A`;
         
-        document.querySelectorAll('.module-card').forEach(card => {
-            const title = card.querySelector('.module-header span').innerText;
-            body += `%0A[X] ${title}%0A`;
-            card.querySelectorAll('.task-item .task-name').forEach(task => {
-                body += `- ${task.innerText}%0A`;
-            });
+        const currentVisitKeys = (int == 1) ? ['A', 'B', 'C', 'D'] : (int == 2) ? (vis == 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][vis-1];
+
+        currentVisitKeys.forEach(k => {
+            body += `%0A[X] ${data[k].title}%0A`;
+            data[k].tasks.forEach(t => { body += `- ${t.n}%0A`; });
         });
+
+        if (int == 4 && vis == 3) body += `%0A[X] Jahresschmierung & Intensiv-Reinigung%0A`;
 
         window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${body}`;
     }
-    updateApp();
+
+    window.onload = () => { getLocation(); updateApp(); };
 </script>
 </body>
 </html>
