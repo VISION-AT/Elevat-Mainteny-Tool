@@ -3,66 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wartungs-Check</title>
+    <title>Techniker-Vorgabe & Checkliste</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; display: flex; justify-content: center; }
-        .container { background: #1e1e1e; padding: 20px; border-radius: 12px; width: 100%; max-width: 500px; border: 1px solid #333; }
-        h2 { color: #0078d4; margin-top: 0; }
-        select, input { width: 100%; padding: 12px; margin: 10px 0; background: #2d2d2d; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .result-box { background: #0078d4; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
-        .total-time { font-size: 2em; font-weight: bold; }
-        .wa-button { background: #25D366; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 10px; }
-        .module { font-size: 0.85em; color: #bbb; border-bottom: 1px solid #333; padding: 8px 0; display: flex; justify-content: space-between; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2, h3 { color: #0078d4; border-bottom: 2px solid #333; padding-bottom: 8px; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; background: #2d2d2d; border: 1px solid #444; border-radius: 6px; color: white; margin-bottom: 10px; }
+        .summary { background: #0078d4; color: white; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .total-time { font-size: 2.2em; font-weight: bold; }
+        .module-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #0078d4; }
+        .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; margin-bottom: 8px; padding-bottom: 4px; }
+        ul { margin: 5px 0; padding-left: 20px; color: #bbb; font-size: 0.9em; }
+        li { margin-bottom: 4px; }
+        .highlight { color: #00ff00; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Wartungs-Vorgabe</h2>
-    <label>Anzahl Etagen:</label>
-    <input type="number" id="floors" value="5" oninput="calculate()">
     
-    <label>Intervall:</label>
+    <label>Etagen:</label>
+    <input type="number" id="floors" value="5" oninput="calculate()">
+
+    <label>Besuch-Rhythmus:</label>
     <select id="interval" onchange="calculate()">
-        <option value="1">1x jährlich</option>
-        <option value="2">2x jährlich</option>
-        <option value="4" selected>4x jährlich (Intensiv)</option>
+        <option value="1">1x jährlich (Basis-Check)</option>
+        <option value="2">2x jährlich (Standard)</option>
+        <option value="4" selected>4x jährlich (Intensiv / Modulwartung)</option>
     </select>
 
-    <div class="result-box">
-        <div>Vorgabezeit pro Besuch:</div>
+    <div class="summary">
+        <div>Soll-Arbeitszeit vor Ort</div>
         <div class="total-time"><span id="total">0</span> Min.</div>
     </div>
 
-    <div id="breakdown"></div>
-
-    <a href="#" id="whatsapp" class="wa-button">Ergebnis per WhatsApp senden</a>
+    <div id="modules-container">
+        </div>
 </div>
 
 <script>
     function calculate() {
-        const f = parseInt(document.getElementById('floors').value) || 0;
-        const i = parseInt(document.getElementById('interval').value);
-        
-        const tEngine = Math.round(40/i);
-        const tFloors = Math.round((f*8)/i);
-        const tCar = Math.round(20/i);
-        const tExtra = (i === 4) ? 20 : 0;
-        const total = 15 + tEngine + tFloors + tCar + tExtra;
+        const floors = parseInt(document.getElementById('floors').value) || 0;
+        const interval = parseInt(document.getElementById('interval').value);
+        const container = document.getElementById('modules-container');
+        container.innerHTML = "";
+
+        // Basis-Daten
+        const modules = [
+            { name: "Vorbereitung", time: 15, tasks: ["Anmeldung/Hauswart", "Absperrung Etage", "Fahrschacht-Check"] },
+            { name: "Antrieb & Steuerung", time: Math.round(40/interval), tasks: ["Ölstand prüfen", "Bremslüftung", "Schaltschrank saugen"] },
+            { name: "Türen & Etagen", time: Math.round((floors * 8)/interval), tasks: ["Türkontakte prüfen", "Schwellenreinigung", "Tableaus Test"] },
+            { name: "Fahrkorb & Fang", time: Math.round(20/interval), tasks: ["Notruf-Test", "Lichtgitter", "Fangvorrichtung Sichtprüfung"] }
+        ];
+
+        let total = 0;
+
+        modules.forEach(m => {
+            total += m.time;
+            container.innerHTML += `
+                <div class="module-box">
+                    <div class="module-header"><span>${m.name}</span> <span class="highlight">${m.time} Min</span></div>
+                    <ul>${m.tasks.map(t => `<li>${t}</li>`).join('')}</ul>
+                </div>`;
+        });
+
+        // Spezielles Modul für 4x Wartung
+        if (interval == 4) {
+            const extraTime = 20;
+            total += extraTime;
+            container.innerHTML += `
+                <div class="module-box" style="border-left-color: #ffaa00;">
+                    <div class="module-header"><span>Intensiv-Reinigung & Fett</span> <span class="highlight">${extraTime} Min</span></div>
+                    <ul>
+                        <li>Führungsschienen schmieren</li>
+                        <li>Schachtgrube intensiv reinigen</li>
+                        <li>Türrollen nachstellen/fetten</li>
+                    </ul>
+                </div>`;
+        }
 
         document.getElementById('total').innerText = total;
-        
-        const text = `Wartung abgeschlossen:%0A- Etagen: ${f}%0A- Intervall: ${i}x%0A- Zeit: ${total} Min.`;
-        document.getElementById('whatsapp').href = `https://wa.me/?text=${text}`;
-        
-        document.getElementById('breakdown').innerHTML = `
-            <div class="module"><span>Basis/Vorbereitung</span><span>15 Min</span></div>
-            <div class="module"><span>Antrieb/Steuerung</span><span>${tEngine} Min</span></div>
-            <div class="module"><span>Türen/Etagen</span><span>${tFloors} Min</span></div>
-            ${tExtra > 0 ? `<div class="module"><span>Zusatz Reinigung</span><span>20 Min</span></div>` : ''}
-        `;
     }
     calculate();
 </script>
+
 </body>
 </html>
