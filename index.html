@@ -124,7 +124,7 @@
         const currentKeys = (interval === 1) ? ['A', 'B', 'C', 'D'] : (interval === 2) ? (visit === 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][visit-1];
 
         let total = 0;
-        if (interval === 1) total += 20; 
+        if (interval === 1) total -= 1; 
         if (interval === 4) total += 10;
 
         let html = "";
