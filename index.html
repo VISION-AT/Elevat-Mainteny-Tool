@@ -15,11 +15,11 @@
         .time-val { font-size: 2.8em; font-weight: bold; display: block; }
         .module-card { background: #252525; border-left: 5px solid #0078d4; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
         .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; }
-        .task-list { margin: 0; padding-left: 20px; font-size: 0.9em; color: #ccc; }
+        .task-list { margin: 0; padding-left: 0; list-style: none; font-size: 0.9em; color: #ccc; }
         .task-item { margin-bottom: 8px; display: flex; justify-content: space-between; }
         .task-time { color: #00ff00; font-size: 0.8em; }
-        .wa-btn { background: #25D366; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 20px; }
-        .bonus-card { border-left-color: #ffaa00; }
+        .mail-btn { background: #0078d4; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 20px; border: none; width: 100%; cursor: pointer; font-size: 16px; }
+        .bonus-card { border-left-color: #ffaa00; background: #2a2212; }
     </style>
 </head>
 <body>
@@ -28,6 +28,11 @@
     <h2>EN 13015 Wartungsplaner</h2>
     
     <div class="input-group">
+        <label>Anlage / Standort (optional):</label>
+        <input type="text" id="location" placeholder="z.B. Bachmähdle 37">
+    </div>
+
+    <div class="input-group">
         <label>Anzahl Stockwerke:</label>
         <input type="number" id="floors" value="5" oninput="updateApp()">
     </div>
@@ -35,9 +40,9 @@
     <div class="input-group">
         <label>Vertrags-Intervall:</label>
         <select id="interval" onchange="updateApp()">
-            <option value="1">1x jährlich (Module A+B+C+D)</option>
-            <option value="2">2x jährlich (Halbjahres-Check)</option>
-            <option value="4">4x jährlich (Quartals-Modul + Schmieren)</option>
+            <option value="1">1x jährlich (Gesamt)</option>
+            <option value="2">2x jährlich</option>
+            <option value="4">4x jährlich</option>
         </select>
     </div>
 
@@ -47,28 +52,28 @@
     </div>
 
     <div class="time-banner">
-        <span>Gesamt-Vorgabezeit vor Ort</span>
+        <span>Interne Zeitvorgabe</span>
         <span class="time-val"><span id="totalTime">0</span> Min.</span>
     </div>
 
     <div id="checklist"></div>
 
-    <a href="#" id="whatsapp" class="wa-btn">Protokoll an DAN senden</a>
+    <button onclick="sendMail()" class="mail-btn">Protokoll per E-Mail senden</button>
 </div>
 
 <script>
     const data = {
-        A: { title: "Modul A: Antrieb & Bremse", base: 30, tasks: [
-            ["Treibscheibe/Seile", 10], ["Bremse prüfen", 10], ["Getriebe/Motor", 5], ["Notbefreiung", 5]
+        A: { title: "Modul A: Antrieb & Reinigung", base: 30, tasks: [
+            ["Treibscheibe/Seile prüfen", 10], ["Bremse prüfen/lüften", 10], ["Motor/Getriebe reinigen/prüfen", 10]
         ]},
         B: { title: "Modul B: Schacht & Grube", base: 25, tasks: [
-            ["Beleuchtung/Not-Halt", 6], ["Begrenzer/Spannstation", 5], ["Pufferprüfung", 5], ["Schienen/Befestigung", 9]
+            ["Beleuchtung/Not-Halt prüfen", 6], ["Begrenzer/Puffer prüfen", 10], ["Grube/Schienen prüfen", 9]
         ]},
-        C: { title: "Modul C: Fahrkorb & Fang", base: 20, tasks: [
-            ["Notruf/Sprechstelle", 5], ["Lichtgitter/Türrevers.", 5], ["Fangvorrichtung Sicht", 5], ["Tableau/Licht", 5]
+        C: { title: "Modul C: Fahrkorb & Kabinentüre", base: 25, tasks: [
+            ["Notruf/Sprechstelle prüfen", 5], ["Lichtgitter/Türreversierung", 10], ["Türantrieb Kabine reinigen/prüfen", 10]
         ]},
-        D: { title: "Modul D: Schachttüren", base: 0, perFloor: 5, tasks: [
-            ["Kontakte/Verriegelung", 2], ["Rollen/Schließer", 2], ["Notentrieg./Schwelle", 1]
+        D: { title: "Modul D: Schachttüren", base: 0, tasks: [
+            ["Türkontakte/Verriegelung prüfen", 2], ["Rollen/Schließer prüfen", 2], ["Notentrieg./Schwelle reinigen", 1]
         ]}
     };
 
@@ -92,31 +97,52 @@
         else if (interval === 2) activeKeys = (visit === 1) ? ['A', 'B'] : ['C', 'D'];
         else activeKeys = [['A'], ['B'], ['C'], ['D']][visit-1];
 
-        let total = 15; // Rüstzeit Fix
+        let total = 0;
         let html = "";
 
         activeKeys.forEach(k => {
             const m = data[k];
-            const mTime = k === 'D' ? floors * 5 : m.base;
+            let mTime = (k === 'D') ? floors * 5 : m.base;
             total += mTime;
             html += `<div class="module-card">
                 <div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div>
-                <div class="task-list">${m.tasks.map(t => `<div class="task-item"><span>${t[0]}</span><span class="task-time">${k==='D' ? t[1]*floors : t[1]} Min</span></div>`).join('')}</div>
+                <ul class="task-list">${m.tasks.map(t => `<li class="task-item"><span>${t[0]}</span><span class="task-time">${k==='D' ? t[1]*floors : t[1]} Min</span></li>`).join('')}</ul>
             </div>`;
         });
 
-        if (interval === 4) {
+        if (interval === 4 && visit === 3) {
             total += 20;
             html += `<div class="module-card bonus-card">
-                <div class="module-header"><span>Zusatz: Schmierung & Reinigung</span><span>20 Min</span></div>
-                <div class="task-list">Führungsschienen ölen, Türführungen fetten, Grube saugen.</div>
+                <div class="module-header"><span>Zusatz: Intensiv-Schmierung & Reinigung</span><span>20 Min</span></div>
+                <div class="task-list">Führungsschienen ölen, Türführungen intensiv fetten, Schachtgrube komplett saugen.</div>
             </div>`;
         }
-
         document.getElementById('totalTime').innerText = total;
         document.getElementById('checklist').innerHTML = html;
-        document.getElementById('whatsapp').href = `https://wa.me/?text=Wartung%20Dornbirn%0AEtagen:%20${floors}%0AIntervall:%20${interval}x%0AZeitvorgabe:%20${total}%20Min.`;
     }
+
+    function sendMail() {
+        const location = document.getElementById('location').value || "unbekannt";
+        const floors = document.getElementById('floors').value;
+        const interval = document.getElementById('interval').value;
+        const visit = document.getElementById('visit').value || 1;
+        
+        let protocolText = `Wartungsprotokoll EN 13015%0A--------------------------------%0AAnlage: ${location}%0AStockwerke: ${floors}%0AIntervall: ${interval}x jährlich%0ABesuch: ${visit}%0A%0ADurchgeführte Arbeiten:%0A`;
+        
+        const activeCards = document.querySelectorAll('.module-card');
+        activeCards.forEach(card => {
+            const title = card.querySelector('.module-header span').innerText;
+            protocolText += `%0A[X] ${title}%0A`;
+            const tasks = card.querySelectorAll('.task-item span:first-child');
+            tasks.forEach(task => {
+                protocolText += `- ${task.innerText}%0A`;
+            });
+        });
+
+        const mailto = `mailto:info@vision-aufzugtechnik.at?subject=Wartungsprotokoll ${location}&body=${protocolText}`;
+        window.location.href = mailto;
+    }
+
     updateApp();
 </script>
 </body>
