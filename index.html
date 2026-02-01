@@ -3,46 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wartungs-Profi EN 13015</title>
+    <title>Vision Aufzugtechnik - Wartungsplaner</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 15px; }
-        .app-container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
-        h2 { color: #0078d4; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .app-container { max-width: 650px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #0078d4; text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-top: 0; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85em; color: #888; margin-bottom: 5px; }
-        select, input { width: 100%; padding: 12px; background: #2d2d2d; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .time-banner { background: #0078d4; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
-        .time-val { font-size: 2.8em; font-weight: bold; display: block; }
+        label { display: block; font-size: 0.85em; color: #888; margin-bottom: 5px; font-weight: bold; }
+        select, input { width: 100%; padding: 12px; background: #2d2d2d; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .time-banner { background: #0078d4; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .time-val { font-size: 2.5em; font-weight: bold; display: block; }
         .module-card { background: #252525; border-left: 5px solid #0078d4; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; }
-        .task-list { margin: 0; padding-left: 0; list-style: none; font-size: 0.9em; color: #ccc; }
-        .task-item { margin-bottom: 8px; display: flex; justify-content: space-between; }
-        .task-time { color: #00ff00; font-size: 0.8em; }
-        .mail-btn { background: #0078d4; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 20px; border: none; width: 100%; cursor: pointer; font-size: 16px; }
+        .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 12px; color: #0078d4; }
+        .task-list { margin: 0; padding: 0; list-style: none; }
+        .task-item { margin-bottom: 10px; font-size: 0.85em; color: #bbb; line-height: 1.4; border-bottom: 1px solid #2e2e2e; padding-bottom: 8px; }
+        .task-name { display: block; color: #eee; font-weight: 600; margin-bottom: 2px; }
+        .task-time { color: #00ff00; font-weight: bold; float: right; }
+        .mail-btn { background: #0078d4; color: white; text-align: center; padding: 18px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 25px; border: none; width: 100%; cursor: pointer; font-size: 18px; transition: background 0.3s; }
+        .mail-btn:hover { background: #005fa3; }
         .bonus-card { border-left-color: #ffaa00; background: #2a2212; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <h2>EN 13015 Wartungsplaner</h2>
+    <h2>Vision Wartungs-Vorgabe</h2>
     
     <div class="input-group">
-        <label>Anlage / Standort (optional):</label>
-        <input type="text" id="location" placeholder="z.B. Bachmähdle 37">
+        <label>Anlage / Standort:</label>
+        <input type="text" id="location" placeholder="z.B. Bachmähdle 37, Dornbirn">
     </div>
 
     <div class="input-group">
         <label>Anzahl Stockwerke:</label>
-        <input type="number" id="floors" value="5" oninput="updateApp()">
+        <input type="number" id="floors" value="5" min="1" oninput="updateApp()">
     </div>
 
     <div class="input-group">
-        <label>Vertrags-Intervall:</label>
+        <label>Wartungs-Intervall:</label>
         <select id="interval" onchange="updateApp()">
-            <option value="1">1x jährlich (Gesamt)</option>
-            <option value="2">2x jährlich</option>
-            <option value="4">4x jährlich</option>
+            <option value="1">1x jährlich (Module A-D gesamt)</option>
+            <option value="2">2x jährlich (Halbjahres-Check)</option>
+            <option value="4">4x jährlich (Quartals-Module)</option>
         </select>
     </div>
 
@@ -52,28 +54,39 @@
     </div>
 
     <div class="time-banner">
-        <span>Interne Zeitvorgabe</span>
+        <span style="font-size: 0.9em; opacity: 0.9;">Interne Netto-Vorgabezeit</span>
         <span class="time-val"><span id="totalTime">0</span> Min.</span>
     </div>
 
     <div id="checklist"></div>
 
-    <button onclick="sendMail()" class="mail-btn">Protokoll per E-Mail senden</button>
+    <button onclick="sendMail()" class="mail-btn">Protokoll an Büro senden</button>
 </div>
 
 <script>
     const data = {
-        A: { title: "Modul A: Antrieb & Reinigung", base: 30, tasks: [
-            ["Treibscheibe/Seile prüfen", 10], ["Bremse prüfen/lüften", 10], ["Motor/Getriebe reinigen/prüfen", 10]
+        A: { title: "Modul A: Triebwerk & Steuerung", base: 45, tasks: [
+            ["Triebwerk / Antrieb", "Sichtprüfung Dichtheit, Geräusche, Vibration, Ölstand prüfen/ergänzen.", 15],
+            ["Bremse", "Bremslüftspiel, Justierung & Kontrolle Belag-Verschleiß.", 10],
+            ["Seile / Aufhängung", "Spannung, Schlösser, Rollen & Treibscheiben prüfen.", 10],
+            ["Steuerung", "Funktion Relais, Schütze, Platinen & FU prüfen.", 10]
         ]},
-        B: { title: "Modul B: Schacht & Grube", base: 25, tasks: [
-            ["Beleuchtung/Not-Halt prüfen", 6], ["Begrenzer/Puffer prüfen", 10], ["Grube/Schienen prüfen", 9]
+        B: { title: "Modul B: Schacht & Sicherheit", base: 35, tasks: [
+            ["Geschwindigkeitsbegrenzer", "Funktions- & Sichtkontrolle mechanisch/elektrisch.", 8],
+            ["Führungsschienen", "Verschleiß, Befestigung prüfen & schmieren.", 12],
+            ["Schacht", "Sichtprüfung Schienenbefestigung, Reinigung der Stützen.", 10],
+            ["Notbefreiung", "Manuelle/automatische Einrichtung inkl. Akkus prüfen.", 5]
         ]},
-        C: { title: "Modul C: Fahrkorb & Kabinentüre", base: 25, tasks: [
-            ["Notruf/Sprechstelle prüfen", 5], ["Lichtgitter/Türreversierung", 10], ["Türantrieb Kabine reinigen/prüfen", 10]
+        C: { title: "Modul C: Kabine & Notruf", base: 45, tasks: [
+            ["Fahrkorbtüren / Antrieb", "Reinigen, prüfen, schmieren. Schwellenreinigung. Lichtgitter prüfen.", 15],
+            ["Kabine innen", "Beleuchtung, Taster, Anzeigen & Belüftung prüfen.", 10],
+            ["Kabinendach", "Reinigung, Inspektionssteuerung, Stop-Taster & Fang-Kontakt.", 10],
+            ["Notruf", "Zwei-Wege-Kommunikation im stromlosen Zustand prüfen.", 10]
         ]},
-        D: { title: "Modul D: Schachttüren", base: 0, tasks: [
-            ["Türkontakte/Verriegelung prüfen", 2], ["Rollen/Schließer prüfen", 2], ["Notentrieg./Schwelle reinigen", 1]
+        D: { title: "Modul D: Etagen & Grube", base: 10, tasks: [
+            ["Schachttüren (pro Etage)", "Rollen/Laufschiene reinigen & schmieren. Verriegelung/Kontakte prüfen.", 5],
+            ["Haltestellen (pro Etage)", "Ruftaster, Positionsanzeigen & Richtungspfeile.", 1],
+            ["Schachtgrube", "Reinigung, Puffer, Endschalter & Schachtlicht prüfen.", 10]
         ]}
     };
 
@@ -92,29 +105,33 @@
         }
 
         const visit = parseInt(visitSel.value) || 1;
-        let activeKeys = [];
-        if (interval === 1) activeKeys = ['A', 'B', 'C', 'D'];
-        else if (interval === 2) activeKeys = (visit === 1) ? ['A', 'B'] : ['C', 'D'];
-        else activeKeys = [['A'], ['B'], ['C'], ['D']][visit-1];
+        let activeKeys = (interval === 1) ? ['A', 'B', 'C', 'D'] : 
+                         (interval === 2) ? (visit === 1 ? ['A', 'B'] : ['C', 'D']) : 
+                         [['A'], ['B'], ['C'], ['D']][visit-1];
 
         let total = 0;
         let html = "";
 
         activeKeys.forEach(k => {
             const m = data[k];
-            let mTime = (k === 'D') ? floors * 5 : m.base;
+            let mTime = (k === 'D') ? (floors * 6) + 10 : m.base;
             total += mTime;
             html += `<div class="module-card">
                 <div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div>
-                <ul class="task-list">${m.tasks.map(t => `<li class="task-item"><span>${t[0]}</span><span class="task-time">${k==='D' ? t[1]*floors : t[1]} Min</span></li>`).join('')}</ul>
+                <div class="task-list">${m.tasks.map(t => `
+                    <div class="task-item">
+                        <span class="task-time">${(k === 'D' && t[0].includes("pro Etage")) ? t[1]*floors : t[1]} Min</span>
+                        <span class="task-name">${t[0]}</span>
+                        ${t[1]}
+                    </div>`).join('')}</div>
             </div>`;
         });
 
         if (interval === 4 && visit === 3) {
             total += 20;
             html += `<div class="module-card bonus-card">
-                <div class="module-header"><span>Zusatz: Intensiv-Schmierung & Reinigung</span><span>20 Min</span></div>
-                <div class="task-list">Führungsschienen ölen, Türführungen intensiv fetten, Schachtgrube komplett saugen.</div>
+                <div class="module-header"><span>E-Modul: Jahresschmierung & Intensiv-Reinigung</span><span>20 Min</span></div>
+                <div class="task-list">Führungsschienen intensiv ölen, Türführungen fetten, Grube & Kabinendach komplett saugen.</div>
             </div>`;
         }
         document.getElementById('totalTime').innerText = total;
@@ -122,27 +139,23 @@
     }
 
     function sendMail() {
-        const location = document.getElementById('location').value || "unbekannt";
-        const floors = document.getElementById('floors').value;
-        const interval = document.getElementById('interval').value;
-        const visit = document.getElementById('visit').value || 1;
+        const loc = document.getElementById('location').value || "unbekannter Standort";
+        const fl = document.getElementById('floors').value;
+        const vis = document.getElementById('visit').value || 1;
+        const int = document.getElementById('interval').value;
         
-        let protocolText = `Wartungsprotokoll EN 13015%0A--------------------------------%0AAnlage: ${location}%0AStockwerke: ${floors}%0AIntervall: ${interval}x jährlich%0ABesuch: ${visit}%0A%0ADurchgeführte Arbeiten:%0A`;
+        let body = `WARTUNGSPROTOKOLL EN 13015%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Prüfungen und Wartungsarbeiten:%0A`;
         
-        const activeCards = document.querySelectorAll('.module-card');
-        activeCards.forEach(card => {
-            const title = card.querySelector('.module-header span').innerText;
-            protocolText += `%0A[X] ${title}%0A`;
-            const tasks = card.querySelectorAll('.task-item span:first-child');
-            tasks.forEach(task => {
-                protocolText += `- ${task.innerText}%0A`;
+        document.querySelectorAll('.module-card').forEach(card => {
+            body += `%0A[X] ${card.querySelector('.module-header span').innerText}%0A`;
+            card.querySelectorAll('.task-item').forEach(item => {
+                const name = item.querySelector('.task-name').innerText;
+                body += `- ${name}%0A`;
             });
         });
 
-        const mailto = `mailto:info@vision-aufzugtechnik.at?subject=Wartungsprotokoll ${location}&body=${protocolText}`;
-        window.location.href = mailto;
+        window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${body}`;
     }
-
     updateApp();
 </script>
 </body>
