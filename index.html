@@ -6,7 +6,7 @@
     <title>Vision Aufzugtechnik - Wartungsplaner</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 15px; }
-        .app-container { max-width: 650px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .app-container { max-width: 650px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; }
         h2 { color: #0078d4; text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-top: 0; }
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.85em; color: #888; margin-bottom: 5px; font-weight: bold; }
@@ -16,11 +16,10 @@
         .module-card { background: #252525; border-left: 5px solid #0078d4; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
         .module-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 12px; color: #0078d4; }
         .task-list { margin: 0; padding: 0; list-style: none; }
-        .task-item { margin-bottom: 10px; font-size: 0.85em; color: #bbb; line-height: 1.4; border-bottom: 1px solid #2e2e2e; padding-bottom: 8px; }
-        .task-name { display: block; color: #eee; font-weight: 600; margin-bottom: 2px; }
-        .task-time { color: #00ff00; font-weight: bold; float: right; }
-        .mail-btn { background: #0078d4; color: white; text-align: center; padding: 18px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 25px; border: none; width: 100%; cursor: pointer; font-size: 18px; transition: background 0.3s; }
-        .mail-btn:hover { background: #005fa3; }
+        .task-item { margin-bottom: 10px; font-size: 0.9em; color: #eee; border-bottom: 1px solid #333; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .task-name { flex: 1; padding-right: 10px; line-height: 1.4; }
+        .task-time { color: #00ff00; font-weight: bold; white-space: nowrap; font-size: 0.85em; }
+        .mail-btn { background: #0078d4; color: white; text-align: center; padding: 18px; border-radius: 8px; text-decoration: none; display: block; font-weight: bold; margin-top: 25px; border: none; width: 100%; cursor: pointer; font-size: 18px; }
         .bonus-card { border-left-color: #ffaa00; background: #2a2212; }
     </style>
 </head>
@@ -66,27 +65,27 @@
 <script>
     const data = {
         A: { title: "Modul A: Triebwerk & Steuerung", base: 45, tasks: [
-            ["Triebwerk / Antrieb", "Sichtprüfung Dichtheit, Geräusche, Vibration, Ölstand prüfen/ergänzen.", 15],
-            ["Bremse", "Bremslüftspiel, Justierung & Kontrolle Belag-Verschleiß.", 10],
-            ["Seile / Aufhängung", "Spannung, Schlösser, Rollen & Treibscheiben prüfen.", 10],
-            ["Steuerung", "Funktion Relais, Schütze, Platinen & FU prüfen.", 10]
+            ["Triebwerk / Antrieb: Sichtprüfung Dichtheit, Geräusche, Vibration, Ölstand prüfen/ergänzen.", 15],
+            ["Bremse: Funktionskontrolle (Bremslüftspiel), Justierung & Kontrolle Belag-Verschleiß.", 10],
+            ["Seile / Aufhängung: Prüfung Spannung, Schlösser, Rollen & Treibscheiben.", 10],
+            ["Steuerung: Funktionsprüfung Relais, Schütze, Platinen & Frequenzumrichter.", 10]
         ]},
         B: { title: "Modul B: Schacht & Sicherheit", base: 35, tasks: [
-            ["Geschwindigkeitsbegrenzer", "Funktions- & Sichtkontrolle mechanisch/elektrisch.", 8],
-            ["Führungsschienen", "Verschleiß, Befestigung prüfen & schmieren.", 12],
-            ["Schacht", "Sichtprüfung Schienenbefestigung, Reinigung der Stützen.", 10],
-            ["Notbefreiung", "Manuelle/automatische Einrichtung inkl. Akkus prüfen.", 5]
+            ["Geschwindigkeitsbegrenzer: Funktions- & Sichtkontrolle mechanisch/elektrisch.", 8],
+            ["Führungsschienen: Verschleiß & Befestigung prüfen, schmieren.", 12],
+            ["Schacht: Sichtprüfung Schienenbefestigungen & Reinigung der Stützen.", 10],
+            ["Notbefreiung: Funktionsprüfung manuell/automatisch inkl. Akkus.", 5]
         ]},
         C: { title: "Modul C: Kabine & Notruf", base: 45, tasks: [
-            ["Fahrkorbtüren / Antrieb", "Reinigen, prüfen, schmieren. Schwellenreinigung. Lichtgitter prüfen.", 15],
-            ["Kabine innen", "Beleuchtung, Taster, Anzeigen & Belüftung prüfen.", 10],
-            ["Kabinendach", "Reinigung, Inspektionssteuerung, Stop-Taster & Fang-Kontakt.", 10],
-            ["Notruf", "Zwei-Wege-Kommunikation im stromlosen Zustand prüfen.", 10]
+            ["Fahrkorbtüren: Antrieb reinigen/prüfen/schmieren, Schwellenreinigung, Lichtgitter prüfen.", 15],
+            ["Kabine innen: Überprüfung Beleuchtung, Taster, Anzeigen & Belüftung.", 10],
+            ["Kabinendach: Reinigung, Inspektionssteuerung, Not-Halt & Fang-Kontakt prüfen.", 10],
+            ["Notruf: Zwei-Wege-Kommunikation im stromlosen Zustand prüfen.", 10]
         ]},
         D: { title: "Modul D: Etagen & Grube", base: 10, tasks: [
-            ["Schachttüren (pro Etage)", "Rollen/Laufschiene reinigen & schmieren. Verriegelung/Kontakte prüfen.", 5],
-            ["Haltestellen (pro Etage)", "Ruftaster, Positionsanzeigen & Richtungspfeile.", 1],
-            ["Schachtgrube", "Reinigung, Puffer, Endschalter & Schachtlicht prüfen.", 10]
+            ["Schachttüren: Rollen/Laufschiene reinigen & schmieren. Verriegelung/Kontakte prüfen (pro Etage).", 5],
+            ["Haltestellen: Funktionsprüfung Ruftaster, Positionsanzeigen & Richtungspfeile (pro Etage).", 1],
+            ["Schachtgrube: Reinigung, Kontrolle Puffer, Endschalter & Schachtbeleuchtung.", 10]
         ]}
     };
 
@@ -118,20 +117,18 @@
             total += mTime;
             html += `<div class="module-card">
                 <div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div>
-                <div class="task-list">${m.tasks.map(t => `
-                    <div class="task-item">
-                        <span class="task-time">${(k === 'D' && t[0].includes("pro Etage")) ? t[1]*floors : t[1]} Min</span>
-                        <span class="task-name">${t[0]}</span>
-                        ${t[1]}
-                    </div>`).join('')}</div>
+                <ul class="task-list">${m.tasks.map(t => {
+                    let taskTime = (k === 'D' && t[0].includes("pro Etage")) ? t[1]*floors : t[1];
+                    return `<li class="task-item"><span class="task-name">${t[0]}</span><span class="task-time">${taskTime} Min</span></li>`;
+                }).join('')}</ul>
             </div>`;
         });
 
         if (interval === 4 && visit === 3) {
             total += 20;
             html += `<div class="module-card bonus-card">
-                <div class="module-header"><span>E-Modul: Jahresschmierung & Intensiv-Reinigung</span><span>20 Min</span></div>
-                <div class="task-list">Führungsschienen intensiv ölen, Türführungen fetten, Grube & Kabinendach komplett saugen.</div>
+                <div class="module-header"><span>Zusatz: Jahresschmierung & Intensiv-Reinigung</span><span>20 Min</span></div>
+                <ul class="task-list"><li class="task-item">Führungsschienen intensiv ölen, Türführungen fetten, Grube & Kabinendach saugen.</li></ul>
             </div>`;
         }
         document.getElementById('totalTime').innerText = total;
@@ -144,15 +141,23 @@
         const vis = document.getElementById('visit').value || 1;
         const int = document.getElementById('interval').value;
         
-        let body = `WARTUNGSPROTOKOLL EN 13015%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Prüfungen und Wartungsarbeiten:%0A`;
+        let body = `WARTUNGSPROTOKOLL%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Arbeiten:%0A`;
         
-        document.querySelectorAll('.module-card').forEach(card => {
-            body += `%0A[X] ${card.querySelector('.module-header span').innerText}%0A`;
-            card.querySelectorAll('.task-item').forEach(item => {
-                const name = item.querySelector('.task-name').innerText;
-                body += `- ${name}%0A`;
+        const activeModules = (int == 1) ? ['A', 'B', 'C', 'D'] : 
+                              (int == 2) ? (vis == 1 ? ['A', 'B'] : ['C', 'D']) : 
+                              [['A'], ['B'], ['C'], ['D']][vis-1];
+
+        activeModules.forEach(k => {
+            const m = data[k];
+            body += `%0A[X] ${m.title.split(':')[1].trim()}%0A`;
+            m.tasks.forEach(t => {
+                body += `- ${t[0]}%0A`;
             });
         });
+
+        if (int == 4 && vis == 3) {
+            body += `%0A[X] Jahresschmierung & Intensiv-Reinigung%0A- Führungsschienen ölen, Türführungen fetten, Grube & Dach saugen.%0A`;
+        }
 
         window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${body}`;
     }
