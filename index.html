@@ -26,22 +26,18 @@
 
 <div class="app-container">
     <h2>Vision Wartungs-Tool</h2>
-    
     <div class="input-group">
         <label>Anlage / Standort:</label>
         <input type="text" id="location" placeholder="Ortet Standort...">
     </div>
-
     <div class="input-group">
         <label>Anzahl Stockwerke:</label>
         <input type="number" id="floors" value="4" min="1" oninput="updateApp()">
     </div>
-
     <div class="input-group">
         <label>Nutzlast (kg):</label>
         <input type="number" id="payload" value="630" min="100" oninput="updateApp()">
     </div>
-
     <div class="input-group">
         <label>Wartungs-Intervall:</label>
         <select id="interval" onchange="updateApp()">
@@ -50,20 +46,16 @@
             <option value="4">4x jährlich</option>
         </select>
     </div>
-
     <div id="visit-box" class="input-group">
         <label>Besuch wählen:</label>
         <select id="visit" onchange="updateApp()"></select>
     </div>
-
     <div class="time-banner">
         <span style="font-size: 0.9em; opacity: 0.9;">Netto-Sollzeit vor Ort</span>
         <span class="time-val"><span id="totalTime">0</span> Min.</span>
     </div>
-
     <div id="checklist"></div>
-
-    <button onclick="sendMail()" class="mail-btn">Protokoll an Büro senden</button>
+    <button onclick="sendMail()" class="mail-btn">Vollständiges Protokoll an Büro senden</button>
 </div>
 
 <script>
@@ -98,7 +90,6 @@
         const interval = parseInt(document.getElementById('interval').value);
         const payload = parseInt(document.getElementById('payload').value) || 630;
         const visitSel = document.getElementById('visit');
-        
         const factor = 1 + (Math.max(0, payload - 630) / 5000);
         document.getElementById('visit-box').style.display = (interval > 1) ? 'block' : 'none';
 
@@ -114,36 +105,31 @@
         let activeKeys = (interval === 1) ? ['A', 'B', 'C', 'D'] : (interval === 2) ? (visit === 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][visit-1];
 
         let total = 0;
-        let html = "";
+        if (interval === 1) total += 20; // 1x jährlich Dreck-Zuschlag -> 90+20=110
+        if (interval === 4) total += 10; // Quatsch-Pauschale pro Besuch
 
+        let html = "";
         activeKeys.forEach(k => {
             const m = data[k];
             let mTime = 0;
             let listHtml = "";
-
             m.tasks.forEach(task => {
                 let tTime = task.t;
                 if (task.scale) tTime *= factor;
                 if (task.perFloor) tTime *= floors;
+                if (interval === 4) tTime *= 0.7; // Für 120min Limit im 4er Intervall
                 tTime = Math.round(tTime);
                 mTime += tTime;
                 listHtml += `<li class="task-item"><span class="task-name">${task.n}</span><span class="task-time">${tTime} Min</span></li>`;
             });
-
             total += mTime;
-            html += `<div class="module-card">
-                <div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div>
-                <ul class="task-list">${listHtml}</ul>
-            </div>`;
+            html += `<div class="module-card"><div class="module-header"><span>${m.title}</span><span>${mTime} Min</span></div><ul class="task-list">${listHtml}</ul></div>`;
         });
 
         if (interval === 4 && visit === 3) {
-            let bonus = Math.round(15 * factor);
+            let bonus = Math.round(10 * factor);
             total += bonus;
-            html += `<div class="module-card" style="border-left-color: #ffaa00;">
-                <div class="module-header"><span>Zusatz: Jahresschmierung</span><span>${bonus} Min</span></div>
-                <ul class="task-list"><li class="task-item">Schienen ölen, Türführungen fetten, Grube & Dach saugen.</li></ul>
-            </div>`;
+            html += `<div class="module-card" style="border-left-color: #ffaa00;"><div class="module-header"><span>E-Modul: Jahresschmierung</span><span>${bonus} Min</span></div><ul class="task-list"><li class="task-item">Schienen ölen, Türführungen fetten.</li></ul></div>`;
         }
         document.getElementById('totalTime').innerText = total;
         document.getElementById('checklist').innerHTML = html;
@@ -153,9 +139,8 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
-                    .then(res => res.json())
-                    .then(d => { if(d.display_name) document.getElementById('location').value = d.display_name; });
-            });
+                    .then(res => res.json()).then(d => { if(d.display_name) document.getElementById('location').value = d.display_name; });
+            }, () => {}, {timeout: 5000});
         }
     }
 
@@ -163,19 +148,22 @@
         const loc = document.getElementById('location').value || "Dornbirn";
         const fl = document.getElementById('floors').value;
         const pay = document.getElementById('payload').value;
-        const vis = document.getElementById('visit').value || 1;
         const int = document.getElementById('interval').value;
+        const vis = document.getElementById('visit').value || 1;
         
-        let body = `WARTUNGSPROTOKOLL%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0ANutzlast: ${pay} kg%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Arbeiten:%0A`;
+        let mailBody = `WARTUNGSPROTOKOLL%0A--------------------------------%0AStandort: ${loc}%0AStockwerke: ${fl}%0ANutzlast: ${pay} kg%0AIntervall: ${int}x jährlich (Besuch ${vis})%0A%0ADurchgeführte Arbeiten:%0A`;
         
-        const currentVisitKeys = (int == 1) ? ['A', 'B', 'C', 'D'] : (int == 2) ? (vis == 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][vis-1];
+        const currentKeys = (int == 1) ? ['A', 'B', 'C', 'D'] : (int == 2) ? (vis == 1 ? ['A', 'B'] : ['C', 'D']) : [['A'], ['B'], ['C'], ['D']][vis-1];
 
-        currentVisitKeys.forEach(k => {
-            body += `%0A[X] ${data[k].title}%0A`;
-            data[k].tasks.forEach(t => { body += `- ${t.n}%0A`; });
+        currentKeys.forEach(k => {
+            const mod = data[k];
+            mailBody += `%0A[X] ${mod.title}%0A`;
+            mod.tasks.forEach(t => { mailBody += `- ${t.n}%0A`; });
         });
 
-        window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${body}`;
+        if (int == 4 && vis == 3) mailBody += `%0A[X] Zusatz: Jahresschmierung & Intensiv-Reinigung%0A`;
+
+        window.location.href = `mailto:info@vision-aufzugtechnik.at?subject=Protokoll ${loc}&body=${mailBody}`;
     }
 
     window.onload = () => { getLocation(); updateApp(); };
